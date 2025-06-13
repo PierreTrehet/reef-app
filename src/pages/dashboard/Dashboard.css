@@ -459,3 +459,8 @@
     padding-bottom: 0.5em;
     padding-top: 0.8em;
 }
+
+.token-price {
+    font-size: 0.813rem;
+    color: var(--text-light);
+}

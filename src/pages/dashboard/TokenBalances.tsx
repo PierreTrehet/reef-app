@@ -1,4 +1,4 @@
-import { Token,Components } from '@reef-chain/react-lib';
+import { Token, Components } from '@reef-chain/react-lib';
 import Uik from '@reef-chain/ui-kit';
 import React, { useContext } from 'react';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -7,16 +7,15 @@ import BigNumber from 'bignumber.js';
 import TokenPricesContext from '../../context/TokenPricesContext';
 import { BUY_URL, CREATE_ERC20_TOKEN_URL } from '../../urls';
 import { localizedStrings } from '../../l10n/l10n';
+import { toCurrencyFormat } from '../../utils/utils';
 import './loading-animation.css';
 import ReefSigners from '../../context/ReefSigners';
-import { isReefswapUI, useDexConfig } from '../../environment';
-import PoolContext from '../../context/PoolContext';
-import HideBalance from '../../context/HideBalance';
-import useConnectedWallet from '../../hooks/useConnectedWallet';
-import { extension as reefExt } from '@reef-chain/util-lib';
-import useWcPreloader from '../../hooks/useWcPreloader';
+import { isReefswapUI } from '../../environment';
 
-const {Skeleton,TokenCard} = Components;
+const {
+  Skeleton,
+  Icons: { getIconUrl },
+} = Components;
 
 interface TokenBalances {
     tokens: Token[];
@@ -40,21 +39,7 @@ const balanceValue = (token: Token, price = 0): number => (new BigNumber(token.b
 
 export const TokenBalances = ({ tokens }: TokenBalances): JSX.Element => {
   const tokenPrices = useContext(TokenPricesContext);
-  const { selectedSigner, network,accounts,provider } = useContext(ReefSigners);
-  const pools = useContext(PoolContext);
-  const hidebalance = useContext(HideBalance)
-  const {selExtensionName} = useConnectedWallet();
-  const {setLoading:setWcPreloader} = useWcPreloader();
-  const { walletSelectorOptions } = Components;
-
-  const isWalletConnect = selExtensionName == walletSelectorOptions[reefExt.REEF_WALLET_CONNECT_IDENT].name
-
-  const handleWalletConnectModal = (hasStarted:boolean)=>{
-      setWcPreloader({
-value:hasStarted,
-message:"waiting for transaction approval"
-      })
-  }
+  const { selectedSigner, network } = useContext(ReefSigners);
 
   const isReefBalanceZero = selectedSigner?.balance._hex === '0x00';
 
@@ -64,46 +49,50 @@ message:"waiting for transaction approval"
     return 'https://discord.com/channels/793946260171259904/1087737503550816396';
   };
 
-  const tokenCards = tokens
+  const reefTokenAddress = '0x0000000000000000000000000000000001000000';
+
+  const tokensSorted = tokens
     .filter(({ balance }) => {
-      try {
-        return balance.gt(0);
-      } catch (error) {
-      }
+      try { return balance.gt(0); } catch (error) {}
       return false;
     })
     .sort((a, b) => {
       const balanceA = balanceValue(a, tokenPrices[a.address] || 0);
       const balanceB = balanceValue(b, tokenPrices[b.address] || 0);
-
       if (balanceA > balanceB) return -1;
       return 1;
     })
     .sort((a) => {
       if (a.symbol !== 'REEF') return 1;
       return -1;
-    })
-    .map((token) => (
-      <div key={token.address}>
-        <TokenCard
-        accounts={accounts}
-        hideBalance={hidebalance}
-        isReefswapUI={isReefswapUI}
-        nw={network}
-        pools={pools}
-        price={tokenPrices[token.address] || 0}
-        token={token}
-        tokens={tokens}
-        useDexConfig={useDexConfig}
-        provider={provider}
-        selectedSigner={selectedSigner}
-        signer={selectedSigner}
-        tokenPrices={tokenPrices}
-        isWalletConnect={isWalletConnect}
-        handleWalletConnectModal={handleWalletConnectModal}
-        />
-      </div>
-    ));
+    });
+
+  const tokenRows = tokensSorted.map((token) => {
+    const price = tokenPrices[token.address] || 0;
+    const available = new BigNumber(token.balance.toString())
+      .div(new BigNumber(10).pow(token.decimals));
+    const staked = token.address === reefTokenAddress && selectedSigner?.lockedBalance
+      ? new BigNumber(selectedSigner.lockedBalance.toString())
+        .div(new BigNumber(10).pow(token.decimals))
+      : new BigNumber(0);
+    const total = available.plus(staked);
+    return (
+      <Uik.Tr key={token.address}>
+        <Uik.Td>
+          <img src={token.iconUrl ? token.iconUrl : getIconUrl(token.address)} alt={token.name} width={24} />
+        </Uik.Td>
+        <Uik.Td>
+          <div>{token.symbol}</div>
+          <div className="token-price">
+            { price ? toCurrencyFormat(price, { maximumFractionDigits: price < 1 ? 4 : 2 }) : localizedStrings.no_pool_data }
+          </div>
+        </Uik.Td>
+        <Uik.Td align="right"><Uik.ReefAmount value={total.toNumber()} /></Uik.Td>
+        <Uik.Td align="right"><Uik.ReefAmount value={available.toNumber()} /></Uik.Td>
+        <Uik.Td align="right"><Uik.ReefAmount value={staked.toNumber()} /></Uik.Td>
+      </Uik.Tr>
+    );
+  });
 
   return (
     <div className="dashboard__tokens">
@@ -137,8 +126,21 @@ message:"waiting for transaction approval"
 
                       : (
                         <>
-                          {tokenCards}
-                          {tokens.length > 1 && isReefswapUI&&<CreateTokenButton />}
+                          <Uik.Table seamless>
+                            <Uik.THead>
+                              <Uik.Tr>
+                                <Uik.Th />
+                                <Uik.Th>Token</Uik.Th>
+                                <Uik.Th align="right">Total</Uik.Th>
+                                <Uik.Th align="right">Available</Uik.Th>
+                                <Uik.Th align="right">Staked</Uik.Th>
+                              </Uik.Tr>
+                            </Uik.THead>
+                            <Uik.TBody>
+                              {tokenRows}
+                            </Uik.TBody>
+                          </Uik.Table>
+                          {tokens.length > 1 && isReefswapUI && <CreateTokenButton />}
                         </>
                       )
                   )
