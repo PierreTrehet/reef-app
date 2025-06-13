@@ -17,6 +17,12 @@ const {
   Icons: { getIconUrl },
 } = Components;
 
+const formatRounded = (val: number): string => {
+  if (val >= 1e6) return `${Math.round(val / 1e6)}M`;
+  if (val >= 1e3) return `${Math.round(val / 1e3)}k`;
+  return Math.round(val).toString();
+};
+
 interface TokenBalances {
     tokens: Token[];
 }
@@ -77,7 +83,7 @@ export const TokenBalances = ({ tokens }: TokenBalances): JSX.Element => {
       : new BigNumber(0);
     const total = available.plus(staked);
     return (
-      <Uik.Tr key={token.address}>
+      <Uik.Tr key={token.address} className="dashboard-token-row">
         <Uik.Td>
           <img src={token.iconUrl ? token.iconUrl : getIconUrl(token.address)} alt={token.name} width={24} />
         </Uik.Td>
@@ -87,9 +93,13 @@ export const TokenBalances = ({ tokens }: TokenBalances): JSX.Element => {
             { price ? toCurrencyFormat(price, { maximumFractionDigits: price < 1 ? 4 : 2 }) : localizedStrings.no_pool_data }
           </div>
         </Uik.Td>
-        <Uik.Td align="right"><Uik.ReefAmount value={total.toNumber()} /></Uik.Td>
-        <Uik.Td align="right"><Uik.ReefAmount value={available.toNumber()} /></Uik.Td>
-        <Uik.Td align="right"><Uik.ReefAmount value={staked.toNumber()} /></Uik.Td>
+        <Uik.Td align="right">{`${formatRounded(total.toNumber())} REEF`}</Uik.Td>
+        <Uik.Td align="right">{`${formatRounded(available.toNumber())} REEF`}</Uik.Td>
+        <Uik.Td align="right">{`${formatRounded(staked.toNumber())} REEF`}</Uik.Td>
+        <Uik.Td align="right" className="token-actions">
+          <Uik.Button text={localizedStrings.send} size="small" onClick={() => window.open('/send', '_self')} />
+          <Uik.Button text="Stake" size="small" />
+        </Uik.Td>
       </Uik.Tr>
     );
   });
@@ -126,14 +136,15 @@ export const TokenBalances = ({ tokens }: TokenBalances): JSX.Element => {
 
                       : (
                         <>
-                          <Uik.Table seamless>
+                          <Uik.Table seamless className="dashboard-tokens-table">
                             <Uik.THead>
                               <Uik.Tr>
                                 <Uik.Th />
                                 <Uik.Th>Token</Uik.Th>
-                                <Uik.Th align="right">Total</Uik.Th>
-                                <Uik.Th align="right">Available</Uik.Th>
-                                <Uik.Th align="right">Staked</Uik.Th>
+                                <Uik.Th>Total</Uik.Th>
+                                <Uik.Th>Available</Uik.Th>
+                                <Uik.Th>Staked</Uik.Th>
+                                <Uik.Th />
                               </Uik.Tr>
                             </Uik.THead>
                             <Uik.TBody>

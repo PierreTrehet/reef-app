@@ -464,3 +464,31 @@
     font-size: 0.813rem;
     color: var(--text-light);
 }
+
+.dashboard-tokens-table {
+    background-color: white;
+}
+
+.dashboard-token-row {
+    position: relative;
+}
+
+.dashboard-token-row::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background-color: var(--border-color);
+}
+
+.dashboard-token-row:last-child::after {
+    display: none;
+}
+
+.token-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
