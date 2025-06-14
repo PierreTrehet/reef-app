@@ -50,26 +50,19 @@ const Validators = (): JSX.Element => {
       const api = provider.api as ApiPromise;
       try {
         // overview provides active and next elected validator addresses
-        const [overview, elected] = await Promise.all([
-          api.derive.staking.overview(),
-          api.derive.staking.electedInfo(),
-        ]);
+        const overview: any = await api.derive.staking.overview();
         const activeAddresses = overview.validators.map((a: any) => a.toString());
         const waiting: string[] = overview.nextElected
           .filter((a: any) => !overview.validators.includes(a))
           .map((a: any) => a.toString());
         const addresses: string[] = tab === 'active' ? activeAddresses : waiting;
-        const exposuresMap = new Map<string, any>();
-        elected.info.forEach((i: any) => {
-          exposuresMap.set(i.accountId.toString(), i.exposureEraStakers);
-        });
         const vals: ValidatorInfo[] = [];
         for (const addr of addresses) {
-          const [info, prefs] = await Promise.all([
+          const [info, exposure, prefs] = await Promise.all([
             api.derive.accounts.info(addr),
+            api.query.staking.erasStakers(overview.activeEra as any, addr),
             api.query.staking.validators(addr as any),
           ]);
-          const exposure = exposuresMap.get(addr);
           let identity = '';
           if (info.identity) {
             const parent = (info.identity as any).displayParent;
