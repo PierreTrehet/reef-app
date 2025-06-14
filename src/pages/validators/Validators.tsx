@@ -13,6 +13,7 @@ import { formatReefAmount } from '../../utils/formatReefAmount';
 import { shortAddress, toCurrencyFormat } from '../../utils/utils';
 import './validators.css';
 import StakingActions from './StakingActions';
+import MyNominationsOverlay from './MyNominationsOverlay';
 
 interface ValidatorInfo {
   address: string;
@@ -31,6 +32,7 @@ const Validators = (): JSX.Element => {
   const [validators, setValidators] = useState<ValidatorInfo[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [nominations, setNominations] = useState<string[]>([]);
+  const [nominationsOpen, setNominationsOpen] = useState(false);
   const [nominatorStake, setNominatorStake] = useState<string>('0');
   const stakeNumber = Number(ethUtils.formatUnits(nominatorStake || '0', 18));
   const stakeUsd = stakeNumber * (tokenPrices[REEF_ADDRESS] || 0);
@@ -174,11 +176,23 @@ const Validators = (): JSX.Element => {
           ) : (
             <Uik.Text>{strings.no_nominations}</Uik.Text>
           )}
+          <Uik.Button
+            text={strings.my_nominations}
+            onClick={() => setNominationsOpen(true)}
+            size="small"
+            disabled={!nominations.length}
+          />
         </div>
       )}
       {tab === 'actions' && (
         <StakingActions validators={validators} />
       )}
+      <MyNominationsOverlay
+        isOpen={nominationsOpen}
+        onClose={() => setNominationsOpen(false)}
+        nominations={nominations}
+        validators={validators}
+      />
       {tab !== 'actions' && (
       <Uik.Table seamless>
         <Uik.THead>
