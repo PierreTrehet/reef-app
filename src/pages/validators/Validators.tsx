@@ -14,12 +14,21 @@ import { shortAddress, toCurrencyFormat } from '../../utils/utils';
 import './validators.css';
 import StakingActions from './StakingActions';
 
+function getMinRequired(exposure: any): BN {
+  if (!exposure?.others?.length) return new BN(0);
+  return exposure.others.reduce(
+    (min: BN, { value }: { value: BN }) => (value.lt(min) ? value : min),
+    exposure.others[0].value,
+  );
+}
+
 interface ValidatorInfo {
   address: string;
   identity?: string;
   totalBonded: string;
   commission: string;
   isActive: boolean;
+  minRequired: string;
 }
 
 const Validators = (): JSX.Element => {
@@ -41,16 +50,23 @@ const Validators = (): JSX.Element => {
       const api = provider.api as ApiPromise;
       try {
         // overview provides active and next elected validator addresses
-        const overview: any = await api.derive.staking.overview();
+        const [overview, elected] = await Promise.all([
+          api.derive.staking.overview(),
+          api.derive.staking.electedInfo(),
+        ]);
         const waiting: string[] = overview.nextElected.filter((a: string) => !overview.validators.includes(a));
         const addresses: string[] = tab === 'active' ? overview.validators : waiting;
+        const exposuresMap = new Map<string, any>();
+        elected.info.forEach((i: any) => {
+          exposuresMap.set(i.accountId.toString(), i.exposureEraStakers);
+        });
         const vals: ValidatorInfo[] = [];
         for (const addr of addresses) {
-          const [info, exposure, prefs] = await Promise.all([
+          const [info, prefs] = await Promise.all([
             api.derive.accounts.info(addr),
-            api.query.staking.erasStakers(overview.activeEra as any, addr),
             api.query.staking.validators(addr),
           ]);
+          const exposure = exposuresMap.get(addr);
           let identity = '';
           if (info.identity) {
             const parent = (info.identity as any).displayParent;
@@ -64,9 +80,10 @@ const Validators = (): JSX.Element => {
           vals.push({
             address: addr,
             identity,
-            totalBonded: (exposure as any)?.total?.toString() || '0',
+            totalBonded: exposure?.total?.toString() || '0',
             commission: prefs?.commission?.toString() || '0',
             isActive: overview.validators.includes(addr),
+            minRequired: getMinRequired(exposure).toString(),
           });
         }
         setValidators(vals);
@@ -187,6 +204,7 @@ const Validators = (): JSX.Element => {
             <Uik.Th>{strings.account}</Uik.Th>
             <Uik.Th>{strings.total_staked}</Uik.Th>
             <Uik.Th>Commission</Uik.Th>
+            <Uik.Th>{strings.min_required}</Uik.Th>
             <Uik.Th />
           </Uik.Tr>
         </Uik.THead>
@@ -211,6 +229,9 @@ const Validators = (): JSX.Element => {
               <Uik.Td>
                 {(Number(v.commission) / 10000000).toFixed(2)}
                 %
+              </Uik.Td>
+              <Uik.Td>
+                {formatReefAmount(new BN(v.minRequired))}
               </Uik.Td>
               <Uik.Td />
             </Uik.Tr>
