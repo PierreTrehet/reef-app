@@ -1,0 +1,10 @@
+.token-card-tooltip-wrapper {
+  position: relative;
+}
+
+.token-card-tooltip-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  cursor: pointer;
+}
