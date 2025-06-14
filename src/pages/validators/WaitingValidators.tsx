@@ -88,7 +88,8 @@ const WaitingValidators = (): JSX.Element => {
             api.derive.staking.overview(),
             api.derive.staking.electedInfo(),
           ]);
-          const addresses: string[] = overview.validators;
+          const activeAddresses = overview.validators.map((a: any) => a.toString());
+          const addresses: string[] = activeAddresses;
           const exposuresMap = new Map<string, any>();
           elected.info.forEach((i: any) => {
             exposuresMap.set(i.accountId.toString(), i.exposureEraStakers);
@@ -97,7 +98,7 @@ const WaitingValidators = (): JSX.Element => {
           for (const addr of addresses) {
             const [info, prefs] = await Promise.all([
               api.derive.accounts.info(addr),
-              api.query.staking.validators(addr),
+              api.query.staking.validators(addr as any),
             ]);
             const exposure = exposuresMap.get(addr);
             let identity = '';

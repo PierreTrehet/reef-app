@@ -54,8 +54,11 @@ const Validators = (): JSX.Element => {
           api.derive.staking.overview(),
           api.derive.staking.electedInfo(),
         ]);
-        const waiting: string[] = overview.nextElected.filter((a: string) => !overview.validators.includes(a));
-        const addresses: string[] = tab === 'active' ? overview.validators : waiting;
+        const activeAddresses = overview.validators.map((a: any) => a.toString());
+        const waiting: string[] = overview.nextElected
+          .filter((a: any) => !overview.validators.includes(a))
+          .map((a: any) => a.toString());
+        const addresses: string[] = tab === 'active' ? activeAddresses : waiting;
         const exposuresMap = new Map<string, any>();
         elected.info.forEach((i: any) => {
           exposuresMap.set(i.accountId.toString(), i.exposureEraStakers);
@@ -64,7 +67,7 @@ const Validators = (): JSX.Element => {
         for (const addr of addresses) {
           const [info, prefs] = await Promise.all([
             api.derive.accounts.info(addr),
-            api.query.staking.validators(addr),
+            api.query.staking.validators(addr as any),
           ]);
           const exposure = exposuresMap.get(addr);
           let identity = '';
@@ -82,7 +85,7 @@ const Validators = (): JSX.Element => {
             identity,
             totalBonded: exposure?.total?.toString() || '0',
             commission: prefs?.commission?.toString() || '0',
-            isActive: overview.validators.includes(addr),
+            isActive: activeAddresses.includes(addr),
             minRequired: getMinRequired(exposure).toString(),
           });
         }
