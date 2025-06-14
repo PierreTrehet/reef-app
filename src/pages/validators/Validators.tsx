@@ -84,7 +84,7 @@ const Validators = (): JSX.Element => {
             address: addr,
             identity,
             totalBonded: exposure?.total?.toString() || '0',
-            commission: prefs?.commission?.toString() || '0',
+            commission: (prefs as any)?.commission?.toString() || '0',
             isActive: activeAddresses.includes(addr),
             minRequired: getMinRequired(exposure).toString(),
           });
