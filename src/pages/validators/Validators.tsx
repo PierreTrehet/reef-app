@@ -20,6 +20,7 @@ interface ValidatorInfo {
   totalBonded: string;
   commission: string;
   isActive: boolean;
+  minRequired: string;
 }
 
 const Validators = (): JSX.Element => {
@@ -61,12 +62,23 @@ const Validators = (): JSX.Element => {
               identity = display;
             }
           }
+          const others = (exposure as any)?.others || [];
+          let minRequired = '0';
+          if (others.length) {
+            const sorted = [...others].sort((a: any, b: any) =>
+              (b.value as BN).cmp(a.value as BN)
+            );
+            const idx = Math.min(sorted.length, 64) - 1;
+            minRequired = sorted[idx]?.value?.toString() || '0';
+          }
+
           vals.push({
             address: addr,
             identity,
             totalBonded: (exposure as any)?.total?.toString() || '0',
             commission: prefs?.commission?.toString() || '0',
             isActive: overview.validators.includes(addr),
+            minRequired,
           });
         }
         setValidators(vals);
@@ -186,6 +198,7 @@ const Validators = (): JSX.Element => {
             <Uik.Th />
             <Uik.Th>{strings.account}</Uik.Th>
             <Uik.Th>{strings.total_staked}</Uik.Th>
+            <Uik.Th>{strings.min_required}</Uik.Th>
             <Uik.Th>Commission</Uik.Th>
             <Uik.Th />
           </Uik.Tr>
@@ -207,6 +220,9 @@ const Validators = (): JSX.Element => {
               </Uik.Td>
               <Uik.Td>
                 {formatReefAmount(new BN(v.totalBonded))}
+              </Uik.Td>
+              <Uik.Td>
+                {formatReefAmount(new BN(v.minRequired))}
               </Uik.Td>
               <Uik.Td>
                 {(Number(v.commission) / 10000000).toFixed(2)}

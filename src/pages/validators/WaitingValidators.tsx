@@ -20,6 +20,7 @@ interface ValidatorInfo {
   totalBonded: string;
   commission: string;
   isActive: boolean;
+  minRequired: string;
 }
 
 const WaitingValidators = (): JSX.Element => {
@@ -61,6 +62,15 @@ const WaitingValidators = (): JSX.Element => {
               }
             }
             const total = (info[i].exposureEraStakers as any)?.total?.toString() || '0';
+            const others = (info[i].exposureEraStakers as any)?.others || [];
+            let minRequired = '0';
+            if (others.length) {
+              const sorted = [...others].sort((a: any, b: any) =>
+                (b.value as BN).cmp(a.value as BN)
+              );
+              const idx = Math.min(sorted.length, 64) - 1;
+              minRequired = sorted[idx]?.value?.toString() || '0';
+            }
             const commission = info[i].validatorPrefs?.commission?.toString() || '0';
             vals.push({
               address: addr,
@@ -68,6 +78,7 @@ const WaitingValidators = (): JSX.Element => {
               totalBonded: total,
               commission,
               isActive: false,
+              minRequired,
             });
           }
           setValidators(vals);
@@ -92,12 +103,23 @@ const WaitingValidators = (): JSX.Element => {
                 identity = display;
               }
             }
+            const others = (exposure as any)?.others || [];
+            let minRequired = '0';
+            if (others.length) {
+              const sorted = [...others].sort((a: any, b: any) =>
+                (b.value as BN).cmp(a.value as BN)
+              );
+              const idx = Math.min(sorted.length, 64) - 1;
+              minRequired = sorted[idx]?.value?.toString() || '0';
+            }
+
             vals.push({
               address: addr,
               identity,
               totalBonded: (exposure as any)?.total?.toString() || '0',
               commission: prefs?.commission?.toString() || '0',
               isActive: true,
+              minRequired,
             });
           }
           setValidators(vals);
@@ -217,6 +239,7 @@ const WaitingValidators = (): JSX.Element => {
             <Uik.Th />
             <Uik.Th>{strings.account}</Uik.Th>
             <Uik.Th>{strings.total_staked}</Uik.Th>
+            <Uik.Th>{strings.min_required}</Uik.Th>
             <Uik.Th>Commission</Uik.Th>
             <Uik.Th />
           </Uik.Tr>
@@ -238,6 +261,9 @@ const WaitingValidators = (): JSX.Element => {
               </Uik.Td>
               <Uik.Td>
                 {formatReefAmount(new BN(v.totalBonded))}
+              </Uik.Td>
+              <Uik.Td>
+                {formatReefAmount(new BN(v.minRequired))}
               </Uik.Td>
               <Uik.Td>
                 {(Number(v.commission) / 10000000).toFixed(2)}
