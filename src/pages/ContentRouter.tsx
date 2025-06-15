@@ -1,7 +1,10 @@
-import { AddressToNumber, hooks, TokenWithAmount } from '@reef-chain/react-lib';
-import React, { useContext} from 'react';
+import {
+  AddressToNumber, hooks, TokenWithAmount, utils,
+} from '@reef-chain/react-lib';
+import React, { useContext } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import axios from 'axios';
+import { tokenPriceUtils, tokenUtil } from '@reef-chain/util-lib';
 import NftContext from '../context/NftContext';
 import PoolContext from '../context/PoolContext';
 import TokenContext from '../context/TokenContext';
@@ -11,7 +14,6 @@ import {
   BIND_URL,
   BONDS_URL,
   VALIDATORS_URL,
-  WAITING_VALIDATORS_URL,
   BUY_URL,
   CREATE_ERC20_TOKEN_URL,
   DASHBOARD_URL,
@@ -33,15 +35,12 @@ import Pools from './pools/Pools';
 import RemoveLiquidity from './pools/RemoveLiquidity';
 import Swap from './swap/Swap';
 import Buy from './buy/Buy';
-import Transfer  from './transfer/Transfer';
+import Transfer from './transfer/Transfer';
 import { isReefswapUI } from '../environment';
 import Onramp from './onramp/Onramp';
 import ReefSigners from '../context/ReefSigners';
 import Snap from './snap/Snap';
 import Validators from './validators/Validators';
-import WaitingValidators from './validators/WaitingValidators';
-import { utils } from '@reef-chain/react-lib';
-import {tokenPriceUtils, tokenUtil} from '@reef-chain/util-lib';
 
 const ContentRouter = (): JSX.Element => {
   const { reefState, selectedSigner } = useContext(ReefSigners);
@@ -55,14 +54,14 @@ const ContentRouter = (): JSX.Element => {
   const [nfts, nftsLoading] = hooks.useAllNfts();
   const pools = hooks.useAllPools(axios);
 
-  const {REEF_ADDRESS} = utils;
-  const reefPrice = hooks.useObservableState(tokenUtil.reefPrice$)
+  const { REEF_ADDRESS } = utils;
+  const reefPrice = hooks.useObservableState(tokenUtil.reefPrice$);
 
-    let tokenPrices = {
-      [REEF_ADDRESS] : reefPrice?(reefPrice as any).data:0
-    };
-  
-    tokenPriceUtils.calculateTokenPrices(pools, tokenPrices);
+  const tokenPrices = {
+    [REEF_ADDRESS]: reefPrice ? (reefPrice as any).data : 0,
+  };
+
+  tokenPriceUtils.calculateTokenPrices(pools, tokenPrices);
 
   return (
     <div className="content">
@@ -84,7 +83,6 @@ const ContentRouter = (): JSX.Element => {
                   <Route exact path={CREATE_ERC20_TOKEN_URL} component={Creator} />
                   <Route exact path={BONDS_URL} component={Bonds} />
                   <Route exact path={VALIDATORS_URL} component={Validators} />
-                  <Route exact path={WAITING_VALIDATORS_URL} component={WaitingValidators} />
                   <Route path={BIND_URL} component={Bind} />
                   <Route path={BUY_URL} component={Onramp} />
                   <Route path={ONRAMP_URL} component={Onramp} />

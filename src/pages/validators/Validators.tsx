@@ -7,7 +7,7 @@ import { utils as ethUtils } from 'ethers';
 import { useHistory } from 'react-router-dom';
 import TokenPricesContext from '../../context/TokenPricesContext';
 import ReefSigners from '../../context/ReefSigners';
-import { VALIDATORS_URL, WAITING_VALIDATORS_URL } from '../../urls';
+import { VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
 import { formatReefAmount } from '../../utils/formatReefAmount';
 import { shortAddress, toCurrencyFormat } from '../../utils/utils';
@@ -28,7 +28,7 @@ const Validators = (): JSX.Element => {
   const tokenPrices = useContext(TokenPricesContext);
   const { REEF_ADDRESS } = utils;
   const history = useHistory();
-  const [tab, setTab] = useState<'active' | 'waiting' | 'actions'>('active');
+  const [tab, setTab] = useState<'active' | 'actions'>('active');
   const [validators, setValidators] = useState<ValidatorInfo[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [nominations, setNominations] = useState<string[]>([]);
@@ -43,8 +43,7 @@ const Validators = (): JSX.Element => {
       try {
         // overview provides active and next elected validator addresses
         const overview: any = await api.derive.staking.overview();
-        const waiting: string[] = overview.nextElected.filter((a: string) => !overview.validators.includes(a));
-        const addresses: string[] = tab === 'active' ? overview.validators : waiting;
+        const addresses: string[] = overview.validators;
         const vals: ValidatorInfo[] = [];
         for (const addr of addresses) {
           const [info, exposure, prefs] = await Promise.all([
@@ -151,14 +150,12 @@ const Validators = (): JSX.Element => {
         <Uik.Tabs
           value={tab}
           onChange={(val) => {
-            const t = val as 'active' | 'waiting' | 'actions';
+            const t = val as 'active' | 'actions';
             setTab(t);
-            if (t === 'waiting') history.push(WAITING_VALIDATORS_URL);
             if (t === 'active') history.push(VALIDATORS_URL);
           }}
           options={[
             { value: 'active', text: 'Active' },
-            { value: 'waiting', text: 'Waiting' },
             { value: 'actions', text: 'Actions' },
           ]}
         />
