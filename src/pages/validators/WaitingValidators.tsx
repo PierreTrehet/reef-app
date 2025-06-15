@@ -183,13 +183,14 @@ const WaitingValidators = (): JSX.Element => {
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
-          <Uik.Text type="title">
-            {strings.your_stake}
-            :
-            {formatReefAmount(new BN(nominatorStake))}
-          </Uik.Text>
-          <Uik.Text type="title">
+          <Uik.Text type="headline" text={strings.your_stake} />
+          <Uik.Text type="headline">
+            <span className="dashboard__balance-text">
+              {formatReefAmount(new BN(nominatorStake))}
+            </span>
+            {' ('}
             {toCurrencyFormat(stakeUsd, { maximumFractionDigits: 2 })}
+            )
           </Uik.Text>
         </div>
       )}

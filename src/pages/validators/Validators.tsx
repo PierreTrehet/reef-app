@@ -2,11 +2,11 @@ import React, { useEffect, useState, useContext } from 'react';
 import Uik from '@reef-chain/ui-kit';
 import { ApiPromise } from '@polkadot/api';
 import BN from 'bn.js';
-import ReefSigners from '../../context/ReefSigners';
-import TokenPricesContext from '../../context/TokenPricesContext';
 import { utils } from '@reef-chain/react-lib';
 import { utils as ethUtils } from 'ethers';
 import { useHistory } from 'react-router-dom';
+import TokenPricesContext from '../../context/TokenPricesContext';
+import ReefSigners from '../../context/ReefSigners';
 import { VALIDATORS_URL, WAITING_VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
 import { formatReefAmount } from '../../utils/formatReefAmount';
@@ -54,7 +54,7 @@ const Validators = (): JSX.Element => {
           let identity = '';
           if (info.identity) {
             const parent = (info.identity as any).displayParent;
-            const display = info.identity.display;
+            const { display } = info.identity;
             if (parent) {
               identity = `${parent}/${display}`;
             } else if (display) {
@@ -128,7 +128,6 @@ const Validators = (): JSX.Element => {
     });
   };
 
-
   return (
     <div className="validators-page">
       <Uik.Text type="headline" className="validators-page__title">
@@ -152,13 +151,14 @@ const Validators = (): JSX.Element => {
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
-          <Uik.Text type="title">
-            {strings.your_stake}
-            :
-            {formatReefAmount(new BN(nominatorStake))}
-          </Uik.Text>
-          <Uik.Text type="title">
+          <Uik.Text type="headline" text={strings.your_stake} />
+          <Uik.Text type="headline">
+            <span className="dashboard__balance-text">
+              {formatReefAmount(new BN(nominatorStake))}
+            </span>
+            {' ('}
             {toCurrencyFormat(stakeUsd, { maximumFractionDigits: 2 })}
+            )
           </Uik.Text>
         </div>
       )}
