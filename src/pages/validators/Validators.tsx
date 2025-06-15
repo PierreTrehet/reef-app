@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, {
+  useEffect, useState, useContext, useMemo,
+} from 'react';
 import Uik from '@reef-chain/ui-kit';
 import { ApiPromise } from '@polkadot/api';
 import BN from 'bn.js';
@@ -10,7 +12,7 @@ import ReefSigners from '../../context/ReefSigners';
 import { VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
 import { formatReefAmount } from '../../utils/formatReefAmount';
-import { shortAddress, toCurrencyFormat } from '../../utils/utils';
+import { shortAddress } from '../../utils/utils';
 import './validators.css';
 import StakingActions from './StakingActions';
 import {
@@ -42,6 +44,24 @@ const Validators = (): JSX.Element => {
   const [nominatorStake, setNominatorStake] = useState<string>('0');
   const stakeNumber = Number(ethUtils.formatUnits(nominatorStake || '0', 18));
   const stakeUsd = stakeNumber * (tokenPrices[REEF_ADDRESS] || 0);
+
+  const formatCompactUSD = (value: number): string => `${
+    Intl.NumberFormat(navigator.language, {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 2,
+    }).format(value)
+  }$US`;
+
+  const formattedStake = useMemo(
+    () => formatReefAmount(new BN(nominatorStake)).replace(' REEF', ''),
+    [nominatorStake],
+  );
+
+  const formattedStakeUsd = useMemo(
+    () => formatCompactUSD(stakeUsd),
+    [stakeUsd],
+  );
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -164,14 +184,18 @@ const Validators = (): JSX.Element => {
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
-          <Uik.Text type="title">
+          <Uik.Text type="lead" className="uik-text--lead">
             {strings.your_stake}
-            :
-            {formatReefAmount(new BN(nominatorStake))}
           </Uik.Text>
-          <Uik.Text type="title">
-            {toCurrencyFormat(stakeUsd, { maximumFractionDigits: 2 })}
-          </Uik.Text>
+          <div className="validators-page__stake-values">
+            <Uik.Text type="headline" className="dashboard__sub-balance-value">
+              {formattedStake}
+              <Uik.ReefIcon />
+            </Uik.Text>
+            <Uik.Text type="headline" className="dashboard__sub-balance-value">
+              ({formattedStakeUsd})
+            </Uik.Text>
+          </div>
         </div>
       )}
       {tab === 'actions' && selectedSigner && (
