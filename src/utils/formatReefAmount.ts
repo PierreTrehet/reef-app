@@ -22,3 +22,12 @@ export function formatReefAmount(value: BN): string {
   const cleaned = truncated.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
   return `${cleaned}${units[unitIndex]} REEF`;
 }
+
+/**
+ * Format a value in Planck (18 decimals) into a human readable
+ * string in REEF with dynamic K/M/B suffix but without the ticker.
+ * The returned string is always in English and truncated to at most two decimals.
+ */
+export function formatReefAmountPlain(value: BN): string {
+  return formatReefAmount(value).replace(' REEF', '');
+}

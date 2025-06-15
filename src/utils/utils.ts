@@ -45,6 +45,11 @@ export const toHumanAmount = (amount: string): string => {
   return amount.slice(0, head.length + 4);
 };
 
+export const formatUSDCompact = (value: number): string => {
+  const formatted = toHumanAmount(value.toFixed(2));
+  return `$${formatted}`;
+};
+
 export const formatAgoDate = (timestamp: number|string): string => {
   const now = new Date(Date.now());
   const date = new Date(timestamp);

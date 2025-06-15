@@ -9,8 +9,8 @@ import TokenPricesContext from '../../context/TokenPricesContext';
 import ReefSigners from '../../context/ReefSigners';
 import { VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
-import { formatReefAmount } from '../../utils/formatReefAmount';
-import { shortAddress, toCurrencyFormat } from '../../utils/utils';
+import { formatReefAmount, formatReefAmountPlain } from '../../utils/formatReefAmount';
+import { shortAddress, formatUSDCompact } from '../../utils/utils';
 import './validators.css';
 import StakingActions from './StakingActions';
 import {
@@ -164,13 +164,15 @@ const Validators = (): JSX.Element => {
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
-          <Uik.Text type="title">
+          <Uik.Text type="lead" className="validators-page__stake-label">
             {strings.your_stake}
-            :
-            {formatReefAmount(new BN(nominatorStake))}
           </Uik.Text>
-          <Uik.Text type="title">
-            {toCurrencyFormat(stakeUsd, { maximumFractionDigits: 2 })}
+          <Uik.Text type="headline" className="dashboard__sub-balance-value validators-page__stake-amount">
+            {formatReefAmountPlain(new BN(nominatorStake))}
+            <Uik.ReefIcon />
+            <span className="validators-page__stake-usd">
+              ({formatUSDCompact(stakeUsd)})
+            </span>
           </Uik.Text>
         </div>
       )}

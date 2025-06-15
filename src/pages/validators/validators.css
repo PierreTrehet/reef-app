@@ -26,6 +26,20 @@
   margin-bottom: 20px;
 }
 
+.validators-page__stake-label {
+  margin-bottom: 4px;
+}
+
+.validators-page__stake-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.validators-page__stake-usd {
+  margin-left: 0.25rem;
+}
+
 .validators-page__nominations-list {
   list-style: none;
   padding-left: 0;
