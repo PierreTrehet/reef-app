@@ -45,6 +45,59 @@ const Validators = (): JSX.Element => {
   const [totalSupply, setTotalSupply] = useState<number>(0);
   const TOTAL_POINTS_TARGET = 172800;
   const INFLATION_RATE = 0.0468;
+  const [sortBy, setSortBy] = useState<'commission' | 'minRequired' | 'apy' | null>(null);
+  const [sortDir, setSortDir] = useState<1 | -1>(1);
+
+  const toggleSort = (column: 'commission' | 'minRequired' | 'apy'): void => {
+    if (sortBy === column) {
+      setSortDir(sortDir === 1 ? -1 : 1);
+    } else {
+      setSortBy(column);
+      setSortDir(1);
+    }
+  };
+
+  const getAPY = (v: ValidatorInfo): number => {
+    const bonded = Number(ethUtils.formatUnits(v.totalBonded, 18));
+    const commissionRate = Number(v.commission) / 1000000000;
+    const avgPoints = validators.length ? TOTAL_POINTS_TARGET / validators.length : 0;
+    const apy = calculateStakingAPY(
+      1,
+      bonded,
+      commissionRate,
+      avgPoints,
+      TOTAL_POINTS_TARGET,
+      INFLATION_RATE,
+      totalSupply,
+    );
+    return apy;
+  };
+
+  const sortedValidators = React.useMemo(() => {
+    const vals = [...validators];
+    if (!sortBy) return vals;
+    vals.sort((a, b) => {
+      if (sortBy === 'commission') {
+        const aVal = Number(a.commission);
+        const bVal = Number(b.commission);
+        return (aVal - bVal) * sortDir;
+      }
+      if (sortBy === 'minRequired') {
+        const aVal = new BN(a.minRequired);
+        const bVal = new BN(b.minRequired);
+        if (aVal.eq(bVal)) return 0;
+        return (aVal.gt(bVal) ? 1 : -1) * sortDir;
+      }
+      if (sortBy === 'apy') {
+        const aVal = getAPY(a);
+        const bVal = getAPY(b);
+        if (aVal === bVal) return 0;
+        return (aVal > bVal ? 1 : -1) * sortDir;
+      }
+      return 0;
+    });
+    return vals;
+  }, [validators, sortBy, sortDir, totalSupply]);
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -183,6 +236,17 @@ const Validators = (): JSX.Element => {
             { value: 'actions', text: 'Actions' },
           ]}
         />
+        <Uik.Button
+          size="small"
+          text="Commission"
+          onClick={() => toggleSort('commission')}
+        />
+        <Uik.Button
+          size="small"
+          text="Min Required"
+          onClick={() => toggleSort('minRequired')}
+        />
+        <Uik.Button size="small" text="APY" onClick={() => toggleSort('apy')} />
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
@@ -226,7 +290,7 @@ const Validators = (): JSX.Element => {
           </Uik.Tr>
         </Uik.THead>
         <Uik.TBody>
-          {validators.map((v) => (
+          {sortedValidators.map((v) => (
             <Uik.Tr key={v.address}>
               <Uik.Td>
                 <div className="validators-page__id">
@@ -243,21 +307,7 @@ const Validators = (): JSX.Element => {
                 {(Number(v.commission) / 10000000).toFixed(2)}%
               </Uik.Td>
               <Uik.Td>
-                {(() => {
-                  const bonded = Number(ethUtils.formatUnits(v.totalBonded, 18));
-                  const commissionRate = Number(v.commission) / 1000000000;
-                  const avgPoints = validators.length ? TOTAL_POINTS_TARGET / validators.length : 0;
-                  const apy = calculateStakingAPY(
-                    1,
-                    bonded,
-                    commissionRate,
-                    avgPoints,
-                    TOTAL_POINTS_TARGET,
-                    INFLATION_RATE,
-                    totalSupply,
-                  );
-                  return `${(apy * 100).toFixed(2)}%`;
-                })()}
+                {`${(getAPY(v) * 100).toFixed(2)}%`}
               </Uik.Td>
               <Uik.Td />
             </Uik.Tr>
