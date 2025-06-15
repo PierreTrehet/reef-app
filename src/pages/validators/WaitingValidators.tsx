@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import Uik from '@reef-chain/ui-kit';
 import { ApiPromise } from '@polkadot/api';
+import type { Exposure } from '@polkadot/types/interfaces';
 import BN from 'bn.js';
 import { utils } from '@reef-chain/react-lib';
 import { utils as ethUtils } from 'ethers';
@@ -14,10 +15,10 @@ import { shortAddress, toCurrencyFormat } from '../../utils/utils';
 import './validators.css';
 import StakingActions from './StakingActions';
 
-function getMinRequired(exposure: any): BN {
+function getMinRequired(exposure: Exposure | undefined): BN {
   if (!exposure?.others?.length) return new BN(0);
   return exposure.others.reduce(
-    (min: BN, { value }: { value: BN }) => (value.lt(min) ? value : min),
+    (min: BN, { value }) => (value.lt(min) ? value : min),
     exposure.others[0].value,
   );
 }
@@ -69,7 +70,7 @@ const WaitingValidators = (): JSX.Element => {
                 identity = display;
               }
             }
-            const exposure = info[i].exposureEraStakers as any;
+            const exposure = info[i].exposureEraStakers as Exposure;
             const total = exposure?.total?.toString() || '0';
             const commission = info[i].validatorPrefs?.commission?.toString() || '0';
             vals.push({
@@ -84,16 +85,21 @@ const WaitingValidators = (): JSX.Element => {
           setValidators(vals);
         } else {
           // Active validators
-          const overview: any = await api.derive.staking.overview();
-          const activeAddresses = overview.validators.map((a: any) => a.toString());
+          const elected = await api.derive.staking.electedInfo({ withExposure: true, withPrefs: true });
+          const activeAddresses = elected.validators.map((a: any) => a.toString());
+          const exposures = new Map<string, Exposure>();
+          const prefsMap = new Map<string, any>();
+          elected.info.forEach((i: any) => {
+            const addr = i.accountId.toString();
+            exposures.set(addr, i.exposure as Exposure);
+            prefsMap.set(addr, i.validatorPrefs);
+          });
           const addresses: string[] = activeAddresses;
           const vals: ValidatorInfo[] = [];
           for (const addr of addresses) {
-            const [info, exposure, prefs] = await Promise.all([
-              api.derive.accounts.info(addr),
-              api.query.staking.erasStakers(overview.activeEra as any, addr),
-              api.query.staking.validators(addr as any),
-            ]);
+            const info = await api.derive.accounts.info(addr);
+            const exposure = exposures.get(addr) as Exposure | undefined;
+            const prefs = prefsMap.get(addr);
             let identity = '';
             if (info.identity) {
               const parent = (info.identity as any).displayParent;
