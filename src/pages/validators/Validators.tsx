@@ -10,7 +10,19 @@ import ReefSigners from '../../context/ReefSigners';
 import { VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
 import { formatReefAmount } from '../../utils/formatReefAmount';
-import { shortAddress, toCurrencyFormat } from '../../utils/utils';
+import { shortAddress } from '../../utils/utils';
+
+const formatCompact = (val: number): string => {
+  const units = ['', 'k', 'M', 'B'];
+  let unitIndex = 0;
+  let num = val;
+  while (num >= 1000 && unitIndex < units.length - 1) {
+    num /= 1000;
+    unitIndex += 1;
+  }
+  const str = num.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+  return `${str}${units[unitIndex]}`;
+};
 import './validators.css';
 import StakingActions from './StakingActions';
 import {
@@ -164,14 +176,18 @@ const Validators = (): JSX.Element => {
       </div>
       {tab === 'actions' && selectedSigner && (
         <div className="validators-page__stake">
-          <Uik.Text type="title">
+          <Uik.Text type="lead" className="uik-text--lead">
             {strings.your_stake}
-            :
-            {formatReefAmount(new BN(nominatorStake))}
           </Uik.Text>
-          <Uik.Text type="title">
-            {toCurrencyFormat(stakeUsd, { maximumFractionDigits: 2 })}
-          </Uik.Text>
+          <div className="validators-page__stake-values">
+            <Uik.Text type="headline" className="dashboard__sub-balance-value">
+              {formatReefAmount(new BN(nominatorStake)).replace(' REEF', '')}
+              <Uik.ReefIcon />
+            </Uik.Text>
+            <Uik.Text type="headline" className="dashboard__sub-balance-value">
+              ({`$${formatCompact(stakeUsd)}`})
+            </Uik.Text>
+          </div>
         </div>
       )}
       {tab === 'actions' && selectedSigner && (
