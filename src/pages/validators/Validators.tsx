@@ -2,11 +2,11 @@ import React, { useEffect, useState, useContext } from 'react';
 import Uik from '@reef-chain/ui-kit';
 import { ApiPromise } from '@polkadot/api';
 import BN from 'bn.js';
-import ReefSigners from '../../context/ReefSigners';
-import TokenPricesContext from '../../context/TokenPricesContext';
 import { utils } from '@reef-chain/react-lib';
 import { utils as ethUtils } from 'ethers';
 import { useHistory } from 'react-router-dom';
+import TokenPricesContext from '../../context/TokenPricesContext';
+import ReefSigners from '../../context/ReefSigners';
 import { VALIDATORS_URL, WAITING_VALIDATORS_URL } from '../../urls';
 import { localizedStrings as strings } from '../../l10n/l10n';
 import { formatReefAmount } from '../../utils/formatReefAmount';
@@ -20,6 +20,7 @@ interface ValidatorInfo {
   totalBonded: string;
   commission: string;
   isActive: boolean;
+  minRequired: string;
 }
 
 const Validators = (): JSX.Element => {
@@ -54,11 +55,23 @@ const Validators = (): JSX.Element => {
           let identity = '';
           if (info.identity) {
             const parent = (info.identity as any).displayParent;
-            const display = info.identity.display;
+            const { display } = info.identity;
             if (parent) {
               identity = `${parent}/${display}`;
             } else if (display) {
               identity = display;
+            }
+          }
+          const others = (exposure as any)?.others || [];
+          let minRequired = '0';
+          if (others.length) {
+            const sorted = others
+              .map((o: any) => new BN(o.value?.toString() || '0'))
+              .sort((a, b) => b.cmp(a));
+            const top = sorted.slice(0, 64);
+            const last = top[top.length - 1];
+            if (last) {
+              minRequired = last.toString();
             }
           }
           vals.push({
@@ -67,6 +80,7 @@ const Validators = (): JSX.Element => {
             totalBonded: (exposure as any)?.total?.toString() || '0',
             commission: prefs?.commission?.toString() || '0',
             isActive: overview.validators.includes(addr),
+            minRequired,
           });
         }
         setValidators(vals);
@@ -128,7 +142,6 @@ const Validators = (): JSX.Element => {
     });
   };
 
-
   return (
     <div className="validators-page">
       <Uik.Text type="headline" className="validators-page__title">
@@ -186,6 +199,7 @@ const Validators = (): JSX.Element => {
             <Uik.Th />
             <Uik.Th>{strings.account}</Uik.Th>
             <Uik.Th>{strings.total_staked}</Uik.Th>
+            <Uik.Th>{strings.min_required}</Uik.Th>
             <Uik.Th>Commission</Uik.Th>
             <Uik.Th />
           </Uik.Tr>
@@ -207,6 +221,9 @@ const Validators = (): JSX.Element => {
               </Uik.Td>
               <Uik.Td>
                 {formatReefAmount(new BN(v.totalBonded))}
+              </Uik.Td>
+              <Uik.Td>
+                {formatReefAmount(new BN(v.minRequired))}
               </Uik.Td>
               <Uik.Td>
                 {(Number(v.commission) / 10000000).toFixed(2)}
