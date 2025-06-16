@@ -196,24 +196,12 @@ const WaitingValidators = (): JSX.Element => {
         </div>
       )}
       {tab === 'actions' && selectedSigner && (
-        <div className="validators-page__nominations">
-          <Uik.Text type="title">{strings.current_nominations}</Uik.Text>
-          {nominations.length ? (
-            <ul className="validators-page__nominations-list">
-              {nominations.map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
-          ) : (
-            <Uik.Text>{strings.no_nominations}</Uik.Text>
-          )}
-          <Uik.Button
-            text={strings.my_nominations}
-            onClick={() => setNominationsOpen(true)}
-            size="small"
-            disabled={!nominations.length}
-          />
-        </div>
+        <Uik.Button
+          text={strings.my_nominations}
+          onClick={() => setNominationsOpen(true)}
+          size="small"
+          disabled={!nominations.length}
+        />
       )}
       {tab === 'actions' && (
         <StakingActions validators={validators} />
