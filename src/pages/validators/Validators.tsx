@@ -128,28 +128,12 @@ const Validators = (): JSX.Element => {
   }, [provider, selectedSigner]);
 
   useEffect(() => {
-    const loadStake = async (): Promise<void> => {
-      if (!provider?.api || !selectedSigner) {
-        setNominatorStake('0');
-        return;
-      }
-      const api = provider.api as ApiPromise;
-      try {
-        let addr = selectedSigner.address;
-        const bonded = await api.query.staking.bonded(addr);
-        if ((bonded as any)?.isSome) {
-          addr = (bonded as any).unwrap().toString();
-        }
-        const stakingInfo: any = await api.derive.staking.account(addr);
-        const active = stakingInfo?.stakingLedger?.active as BN | undefined;
-        setNominatorStake(active ? active.toString() : '0');
-      } catch (e) {
-        console.warn('Error loading nominator stake', e);
-        setNominatorStake('0');
-      }
-    };
-    loadStake();
-  }, [provider, selectedSigner]);
+    if (selectedSigner?.lockedBalance) {
+      setNominatorStake(selectedSigner.lockedBalance.toString());
+    } else {
+      setNominatorStake('0');
+    }
+  }, [selectedSigner]);
 
   const toggleSelect = (addr: string): void => {
     setSelected((prev) => {
@@ -189,11 +173,15 @@ const Validators = (): JSX.Element => {
               type="headline"
               className="dashboard__sub-balance-value validators-page__reef-amount"
             >
-              {formatReefAmount(new BN(nominatorStake)).replace(' REEF', '')}
+              <span className="dashboard__balance-text">
+                {formatReefAmount(new BN(nominatorStake)).replace(' REEF', '')}
+              </span>
             </Uik.Text>
             <Uik.ReefIcon className="validators-page__reef-icon" />
             <Uik.Text type="headline" className="dashboard__sub-balance-value">
-              ({`$${formatCompact(stakeUsd)}`})
+              (<span className="dashboard__balance-text">$
+                {formatCompact(stakeUsd)}
+              </span>)
             </Uik.Text>
           </div>
         </div>
